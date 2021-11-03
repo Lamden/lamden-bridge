@@ -13,9 +13,13 @@ const web3 = new Web3(conf.eth.network);
 const grabber = require("./block-grabber");
 
 const LAMDEN_CONTRACT_NAME = conf.lamden.contract;
+const LAMDEN_BRIDGE_NAME = conf.lamden.bridge;
 const LAMDEN_NETWORK_INFO = conf.lamden.network;
 
 const lamdenWallet = Lamden.wallet.create_wallet({ sk: conf.lamden.wallet.sk });
+const bridgeWallet = Lamden.wallet.create_wallet({
+  sk: conf.lamden.b_wallet.sk,
+});
 const network = new Lamden.Network(LAMDEN_NETWORK_INFO);
 
 function setupDatabse() {
@@ -37,14 +41,14 @@ function sign(data) {
   return web3.eth.accounts.sign(data, conf.eth.privKey);
 }
 
-async function checkBlock(blockNo) {
+async function checkBlock(blockNo, contractName, functionName) {
   const block = await grabber.getBlockDetails(blockNo);
   if (block.subblocks && block.subblocks !== "undefined") {
     for (const sb of block.subblocks) {
       for (const tx of sb.transactions) {
-        if (tx.transaction.payload.contract === LAMDEN_CONTRACT_NAME) {
+        if (tx.transaction.payload.contract === contractName) {
           if (!tx.result.startsWith("AssertionError(") && tx.status === 0) {
-            if (tx.transaction.payload.function === "burn") {
+            if (tx.transaction.payload.function === functionName) {
               return tx.result.substring(1, tx.result.length - 1);
             }
           }
@@ -55,29 +59,11 @@ async function checkBlock(blockNo) {
   return "Not Found";
 }
 
-async function checkBlockForDeposit(blockNo) {
-  const block = await grabber.getBlockDetails(blockNo);
-  if (block.subblocks && block.subblocks !== "undefined") {
-    for (const sb of block.subblocks) {
-      for (const tx of sb.transactions) {
-        if (tx.transaction.payload.contract === LAMDEN_CONTRACT_NAME) {
-          if (!tx.result.startsWith("AssertionError(") && tx.status === 0) {
-            if (tx.transaction.payload.function === "deposit") {
-              return tx.result.substring(1, tx.result.length - 1);
-            }
-          }
-        }
-      }
-    }
-  }
-  return "Not Found";
-}
-
-async function submitProof(hashed_abi, signed_abi) {
-  const { vk, sk } = lamdenWallet;
+async function submitProof(hashed_abi, signed_abi, contractName, walletName) {
+  const { vk, sk } = walletName;
   const txInfo = {
     senderVk: vk,
-    contractName: LAMDEN_CONTRACT_NAME,
+    contractName: contractName,
     methodName: "post_proof",
     kwargs: {
       hashed_abi,
@@ -98,15 +84,24 @@ async function main(db) {
 
   for (let blockNo = lastCheckedBlock + 1; blockNo <= latestBlock; blockNo++) {
     console.log("Checking: ", blockNo);
-    const unSignedABI = await checkBlock(blockNo);
-    const depositDetails = await checkBlockForDeposit(blockNo);
+    const unSignedABI = await checkBlock(blockNo, LAMDEN_CONTRACT_NAME, "burn");
+    const depositDetails = await checkBlock(
+      blockNo,
+      LAMDEN_BRIDGE_NAME,
+      "deposit"
+    );
     if (unSignedABI !== "Not Found") {
       try {
         console.log(unSignedABI);
         let signedABIObj = sign(unSignedABI);
         console.log(signedABIObj);
         const signedABI = signedABIObj.signature;
-        const r = await submitProof(unSignedABI, signedABI);
+        const r = await submitProof(
+          unSignedABI,
+          signedABI,
+          LAMDEN_CONTRACT_NAME,
+          lamdenWallet
+        );
 
         if (
           r &&
@@ -124,9 +119,33 @@ async function main(db) {
         console.log(error);
       }
     } else if (depositDetails !== "Not Found") {
-        try {
-            
+      try {
+        console.log(depositDetails);
+        let signedDetails = sign(depositDetails);
+        console.log(signedDetails);
+        const signedDepositProof = signedDetails.signature;
+        const r = await submitProof(
+          depositDetails,
+          signedDepositProof,
+          LAMDEN_BRIDGE_NAME,
+          bridgeWallet
+        );
+
+        if (
+          r &&
+          r.result &&
+          !r.result.startsWith("AssertionError(") &&
+          r.status === 0
+        ) {
+          console.log("Submitted Sucessfully");
+          db.set("lamden_block", blockNo).write();
+        } else {
+          console.log("Ops! There was an error");
+          console.log(r);
         }
+      } catch (error) {
+        console.log(error);
+      }
     } else {
       db.set("lamden_block", blockNo).write();
     }
