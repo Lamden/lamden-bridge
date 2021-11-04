@@ -166,14 +166,14 @@ contract ControlledToken is IERC20, Ownable {
         return true;
     }
 
-    function mint(address to, uint256 amount) public virtual returns (bool success) {
+    function mint(address to, uint256 amount) public override virtual returns (bool success) {
         _totalSupply = _totalSupply.add(amount);
         _balances[to] = _balances[to].add(amount);
         emit Transfer(address(0), to, amount);
         return true;
     }
 
-    function burn(address from, uint256 amount) public virtual returns (bool success) {
+    function burn(address from, uint256 amount) public override virtual returns (bool success) {
         _totalSupply = _totalSupply.sub(amount);
         _balances[from] = _balances[from].sub(amount);
         emit Transfer(address(0), from, amount);
@@ -205,21 +205,22 @@ contract ControlledToken is IERC20, Ownable {
 contract ClearingHouse is Ownable {
     using SafeMath for uint256;
 
-    mapping(address => bool) supportedTokens;
     mapping(address => uint256) nonces;
 
-    ControlledToken controlledToken = ControlledToken(0x0);
+    ControlledToken controlledToken;
 
     // Double mapping as token address -> owner -> balance
-    event TokensWrapped(address indexed token, string indexed receiver, uint256 indexed amount);
+    event TokensWrapped(string indexed receiver, uint256 indexed amount);
+
+    constructor(address _controlledToken) {
+        controlledToken = ControlledToken(_controlledToken);
+    }
 
     function deposit(uint256 amount, string memory receiver) public {
-        require(supportedTokens[token] == true, 'Unsupported token!');
-
         controlledToken.transferFrom(msg.sender, address(this), amount);
         controlledToken.burn(address(this), amount);
 
-        emit TokensWrapped(token, receiver, amount);
+        emit TokensWrapped(receiver, amount);
     }
 
     function hashEthMsg(bytes32 _messageHash) public pure returns (bytes32) {
@@ -247,6 +248,6 @@ contract ClearingHouse is Ownable {
             address recoveredAddress = ecrecover(hashed, v, r, s);
             require(recoveredAddress != address(0) && recoveredAddress == owner(), 'Invalid Signature!');
             require(token == address(token));
-            token.mint(msg.sender, amount);
+            controlledToken.mint(msg.sender, amount);
     }
 }

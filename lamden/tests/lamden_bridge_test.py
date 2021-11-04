@@ -2,15 +2,27 @@ import unittest
 from contracting.client import ContractingClient
 
 with open("../contracts/lamden_bridge.py") as f:
-    code = f.read()
+    codeBridge = f.read()
+
+with open("../contracts/currency_test.py") as f:
+    codeCurrency = f.read()
 
 
 class TestContract(unittest.TestCase):
     def setUp(self):
         self.c = ContractingClient()
         self.c.flush()
-        self.c.submit(code, name="con_lamden_bridge")
+        self.c.submit(
+            codeCurrency, name="currency", constructor_args={"vk": self.c.signer}
+        )
+        self.c.submit(
+            codeBridge,
+            name="con_lamden_bridge",
+        )
         self.contract = self.c.get_contract("con_lamden_bridge")
+        self.currencyContract = self.c.get_contract("currency")
+        self.currencyContract.approve(amount=100, to="con_lamden_bridge")
+        # print(self.c.get_contract())
         # print(
         #     "get_var: ",
         #     self.c.get_var(
@@ -27,6 +39,8 @@ class TestContract(unittest.TestCase):
 
     def tearDown(self):
         self.c.flush()
+
+    # def test_no_allowance(self):
 
     def test_pack_valid_prefix(self):
         with self.assertRaises(Exception) as cm:

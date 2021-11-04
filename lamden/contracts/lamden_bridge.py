@@ -1,4 +1,5 @@
-balances = Hash(default_value=10)
+import currency
+
 nonces = Hash(default_value=0)
 proofs = Hash()
 
@@ -47,35 +48,6 @@ def pack_int(i):
     return left_pad(h)
 
 
-def transfer(amount: float, to: str):
-    assert amount > 0, "Cannot send negative balances!"
-
-    sender = ctx.caller
-
-    assert balances[sender] >= amount, "Not enough coins to send!"
-
-    balances[sender] -= amount
-    balances[to] += amount
-
-
-def transfer_from(amount: float, to: str, main_account: str):
-    assert amount > 0, "Cannot send negative balances!"
-
-    sender = ctx.caller
-
-    assert (
-        balances[main_account, sender] >= amount
-    ), "Not enough coins approved to send! You have {} and are trying to spend {}".format(
-        balances[main_account, sender], amount
-    )
-    assert balances[main_account] >= amount, "Not enough coins to send!"
-
-    balances[main_account, sender] -= amount
-    balances[main_account] -= amount
-
-    balances[to] += amount
-
-
 @construct
 def seed(contract_address="0x2c6e331E4c96f2BdF2D8973831B225F75c89A27b", decimals=18):
     owner.set(ctx.caller)
@@ -85,7 +57,7 @@ def seed(contract_address="0x2c6e331E4c96f2BdF2D8973831B225F75c89A27b", decimals
 
 @export
 def deposit(amount: float, ethereum_address: str):
-    transfer_from(amount=amount, to=ctx.this, main_account=ctx.caller)
+    currency.transfer_from(amount=amount, to=ctx.this, main_account=ctx.caller)
 
     packed_token = pack_eth_address(token_address.get())
     packed_amount = pack_amount(amount, token_decimals.get())
@@ -104,11 +76,15 @@ def deposit(amount: float, ethereum_address: str):
 @export
 def withdraw(amount: float, to: str):
     assert ctx.caller == owner.get(), "Only the owner can call!"
-    token = I.import_module()
-    transfer(amount=amount, to=to)
+    currency.transfer(amount=amount, to=to)
 
 
 @export
 def post_proof(hashed_abi: str, signed_abi: str):
     assert ctx.caller == owner.get(), "Only owner can call!"
     proofs[hashed_abi] = signed_abi
+
+
+@export
+def proofs(hashed_abi: str):
+    return proofs[hashed_abi]
