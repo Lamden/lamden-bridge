@@ -5,7 +5,7 @@
       "sk": "74b977269d619f511ae692658be85477ed959a9d58f399670a349e622697f881",
       "vk": "464938b51e6c1556f69e7f452fa330e7c50da5106e4fca2d5f06981b6de84eda"
     },
-    "bridge": "con_lamden_bridge_001",
+    "bridge": "con_tru_bridge",
     "b_wallet": {
       "sk": "148fbca15612e1774c99a61493b5643f3446da6dae6e3c13275715669122d3ee",
       "vk": "2db729f7465d08b5fe8f9473503a63ce04f01508b5546d04372c08cd849ff1c6"
@@ -20,8 +20,9 @@
     }
   },
   "eth": {
-    "privKey": "0617daa72f2a44536f58e34aaa641beb8a19933a392efd059bd7eeb7348999ca",
-    "contract_address": "0x42617d2D05d076EC95e0cbE8fCd3e01915501ae5",
-    "network": "wss://kovan.infura.io/ws/v3/63ded85a9a5442c6ae2b94c2e97fb8c4"
+    "privKey": "2cc1c54f39e018e99f177e41dba2dc4981caf9f5dd804ebd6263c9217530b77d",
+    "contract_address": "0x6CBe346be545E6F64f435B314e052ce753eE0b55",
+    "bridge_address": "0x4df1337870d29888Afa853fC0E15288559B7a562",
+    "network": "wss://rinkeby.infura.io/ws/v3/a3f4e2530c1e4f558a7102056bb2bd87"
   }
 }

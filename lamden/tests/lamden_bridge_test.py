@@ -22,25 +22,9 @@ class TestContract(unittest.TestCase):
         self.contract = self.c.get_contract("con_lamden_bridge")
         self.currencyContract = self.c.get_contract("currency")
         self.currencyContract.approve(amount=100, to="con_lamden_bridge")
-        # print(self.c.get_contract())
-        # print(
-        #     "get_var: ",
-        #     self.c.get_var(
-        #         "con_lamden_bridge",
-        #         "token_address",
-        #     ),
-        # )
-        # print(
-        #     "quick read: ",
-        #     self.contract.quick_read(
-        #         "token_address",
-        #     ),
-        # )
 
     def tearDown(self):
         self.c.flush()
-
-    # def test_no_allowance(self):
 
     def test_pack_valid_prefix(self):
         with self.assertRaises(Exception) as cm:
@@ -71,25 +55,17 @@ class TestContract(unittest.TestCase):
 
     def test_only_owner_can_call_withdraw(self):
         with self.assertRaises(Exception) as cm:
-            self.contract.withdraw(amount=1, to="stu", signer="mocker")
+            self.contract.withdraw(amount=1, to="someone", signer="mocker")
         err = cm.exception
         self.assertEqual(str(err), "Only the owner can call!")
 
     def test_only_owner_can_call_post_proof(self):
         with self.assertRaises(Exception) as cm:
             self.contract.post_proof(
-                hashed_abi="example", signed_abi="sexample", signer="mocker"
+                hashed_abi="example", signed_abi="signed", signer="mocker"
             )
         err = cm.exception
         self.assertEqual(str(err), "Only owner can call!")
-
-    # def test_supply(self):
-    #     self.assertEqual(self.contract.quick_read("S", self.c.signer), 50)
-
-    # @unittest.expectedFailure
-    # def test_balance_sufficient(self):
-    #     self.c.set_var("con_strums_test", "S", [self.c.signer], 0)
-    #     self.contract.transfer(10, "mock")
 
 
 if __name__ == "__main__":

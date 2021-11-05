@@ -49,7 +49,7 @@ def pack_int(i):
 
 
 @construct
-def seed(contract_address="0x2c6e331E4c96f2BdF2D8973831B225F75c89A27b", decimals=18):
+def seed(contract_address="0x4489E6467B15Ca881F51b80875b6Ab2b0e2Dcd3c", decimals=18):
     owner.set(ctx.caller)
     token_address.set(contract_address)
     token_decimals.set(decimals)

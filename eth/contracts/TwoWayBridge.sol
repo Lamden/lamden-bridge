@@ -202,7 +202,7 @@ contract ControlledToken is IERC20, Ownable {
     }
 }
 
-contract ClearingHouse is Ownable {
+contract ClearingHouse_1 is Ownable {
     using SafeMath for uint256;
 
     mapping(address => uint256) nonces;
@@ -210,7 +210,7 @@ contract ClearingHouse is Ownable {
     ControlledToken controlledToken;
 
     // Double mapping as token address -> owner -> balance
-    event TokensWrapped(string indexed receiver, uint256 indexed amount);
+    event TokensBurned(string indexed receiver, uint256 indexed amount);
 
     constructor(address _controlledToken) {
         controlledToken = ControlledToken(_controlledToken);
@@ -220,7 +220,7 @@ contract ClearingHouse is Ownable {
         controlledToken.transferFrom(msg.sender, address(this), amount);
         controlledToken.burn(address(this), amount);
 
-        emit TokensWrapped(receiver, amount);
+        emit TokensBurned(receiver, amount);
     }
 
     function hashEthMsg(bytes32 _messageHash) public pure returns (bytes32) {
