@@ -10,7 +10,7 @@ async function main() {
     "0x4489E6467B15Ca881F51b80875b6Ab2b0e2Dcd3c"
   );
 
-  console.log("Token address:", token.address);
+  console.log("Bridge address:", token.address);
 }
 
 main()

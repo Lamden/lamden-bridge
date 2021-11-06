@@ -55,15 +55,17 @@ Run `python3 lamden_bridge_test.py` inside the test's directory. The error logs 
 
 Run `npx hardhat test` inside `./eth`.
 
-### Reproducing end to end test for Tau tokens
+### Reproducing the end to end test for Tau tokens
+
+Note: Deployment of contracts may be skipped, and contracts interacted with at addresses already deployed and listed in the config files.
 
 1. **Deploying to Ethereum**
 
-Begin by setting up the ethereum contracts. These are deployed using hardhat from the `./eth` directory. Configure `hardhat.config.js` to have the correct solidity version, correct network urls and correct private keys for the accounts that will be deploying the contracts. For the two contracts `ControlledToken` and `ClearingHouse_1` within `TwoWayBridge.sol` we will be using neworks labeled `rinkeby1` and `rinkeby2`. These are actually the same network but contain different accounts for the two contracts. After infura links and account keys are configured, deploy the token contract by running `npx hardhat scripts/deploy_token.js --network rinkeby2`. This should return the address of the token contract, which you should copy and pass as constructor argument to `Token.deploy()` within `./scripts/deploy_bridge.js`. Afterwards deploy bridge contract using `npx hardhat scripts/deploy_bridge.js --network rinkeby1`. Copy the bridge's address.
+Begin by setting up the ethereum contracts. These are deployed using hardhat from the `./eth` directory. Install hardhat by running `npm install --save-dev hardhat`. Configure `hardhat.config.js` to have the correct solidity version, correct network urls and correct private keys to the accounts that will be deploying the contracts. For the two contracts `ControlledToken` and `ClearingHouse_1` within `TwoWayBridge.sol` we will be using neworks labeled `rinkeby1` and `rinkeby2`. These are actually the same network but contain different accounts for the two contracts. After infura links and account keys are configured, deploy the token contract by running `npx hardhat run scripts/deploy_token.js --network rinkeby2`. This should return the address of the token contract, which you should copy and pass as constructor argument to `Token.deploy()` within `./scripts/deploy_bridge.js`. Afterwards deploy bridge contract using `npx hardhat run scripts/deploy_bridge.js --network rinkeby1`. Save the bridge's address.
 
 2. **Deploying to Lamden**
 
-Deploying contracts on the lamden side: simply deploy `lamden_bridge.py` contract inside the Lamden wallet app, and pass the bridge's eth address, copied in the last step, as a constructor argument.
+Deploying contracts on the lamden side: simply deploy `lamden_bridge.py` contract inside the Lamden wallet app, and pass the token's eth address, copied in the last step, as a constructor argument.
 
 3. **Configuring listening servers**
 
@@ -75,6 +77,6 @@ CD into `./server` and run `npm install` followed by `node lamden.js`. Open a ne
 
 5. **Contract interaction**
 
-Use an account on both blockchains that isn't an owner of any of the contracts. Simply follow the workflow by calling `deposit` first on the Lamden side, then submitting the signature's v,r,s as well as deposit arguments into `withdraw` on the Ethereum side. To return your dTau to Lamden call `deposit` on the Ethereum contract and see the Tau appear in your Lamden wallet. The listening servers should print into the console when they catch events and send corresponding transactions.
+Use an account on both blockchains that isn't an owner of any of the contracts. Remember to approve the bridge contracts on both sides. Follow the workflow by calling `deposit` first on the Lamden side, then submitting the signature's v,r,s as well as deposit arguments into `withdraw` on the Ethereum side. To return your dTau to Lamden call `deposit` on the Ethereum contract and see the Tau appear in your Lamden wallet. The listening servers should print into the console when they catch events and send corresponding transactions.
 
 I interacted with the contracts on the Lamden side with the wallet and using Remix on the Ethereum side.

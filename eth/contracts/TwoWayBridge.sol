@@ -202,6 +202,7 @@ contract ControlledToken is IERC20, Ownable {
     }
 }
 
+
 contract ClearingHouse_1 is Ownable {
     using SafeMath for uint256;
 
@@ -209,8 +210,7 @@ contract ClearingHouse_1 is Ownable {
 
     ControlledToken controlledToken;
 
-    // Double mapping as token address -> owner -> balance
-    event TokensBurned(string indexed receiver, uint256 indexed amount);
+    event TokensBurned(uint256 indexed amount, string receiver);
 
     constructor(address _controlledToken) {
         controlledToken = ControlledToken(_controlledToken);
@@ -220,7 +220,7 @@ contract ClearingHouse_1 is Ownable {
         controlledToken.transferFrom(msg.sender, address(this), amount);
         controlledToken.burn(address(this), amount);
 
-        emit TokensBurned(receiver, amount);
+        emit TokensBurned(amount, receiver);
     }
 
     function hashEthMsg(bytes32 _messageHash) public pure returns (bytes32) {
@@ -247,7 +247,7 @@ contract ClearingHouse_1 is Ownable {
             hashed = hashEthMsg(hashed);
             address recoveredAddress = ecrecover(hashed, v, r, s);
             require(recoveredAddress != address(0) && recoveredAddress == owner(), 'Invalid Signature!');
-            require(token == address(token));
+            require(token == address(controlledToken), 'Invalid token address!');
             controlledToken.mint(msg.sender, amount);
     }
 }

@@ -3,7 +3,7 @@ const Web3 = require("web3");
 const Lamden = require("lamden-js");
 
 const abi = require("./abi/clearinghouse.json");
-const abi2 = require("./abi/clearinghouse_1.json");
+const abi2 = require("./abi/clearinghouse_1.json").abi;
 const conf = require("./conf.json");
 
 const web3 = new Web3(conf.eth.network);
@@ -40,8 +40,8 @@ async function withdraw(amount, receiver) {
     contractName: LAMDEN_BRIDGE_NAME,
     methodName: "withdraw",
     kwargs: {
-      amount: amount,
-      lamden_wallet: receiver,
+      amount: Number(amount),
+      to: receiver,
     },
     stampLimit: 100,
   };

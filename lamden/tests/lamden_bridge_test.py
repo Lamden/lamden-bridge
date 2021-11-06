@@ -22,6 +22,12 @@ class TestContract(unittest.TestCase):
         self.contract = self.c.get_contract("con_lamden_bridge")
         self.currencyContract = self.c.get_contract("currency")
         self.currencyContract.approve(amount=100, to="con_lamden_bridge")
+        # print(
+        #     "ABI: ",
+        #     self.contract.deposit(
+        #         amount=1, ethereum_address="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+        #     ),
+        # )
 
     def tearDown(self):
         self.c.flush()

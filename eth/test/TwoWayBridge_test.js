@@ -3,9 +3,8 @@ const { ethers } = require("hardhat");
 const assert = require("assert");
 
 describe("TwoWayBridge", function () {
-  let test_abi =
-    "0x0000000000000000000000004489E6467B15Ca881F51b80875b6Ab2b0e2Dcd3c0000000000000000000000000000000000000000000000000de0b6b3a764000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000003C44CdDdB6a900fa2b585dd299e03d12FA4293BC";
-  const data = ethers.utils.toUtf8Bytes(test_abi);
+  let test_abi;
+  let hashed_abi;
   let token_acc;
   let bridge_acc;
   let end_acc;
@@ -20,30 +19,145 @@ describe("TwoWayBridge", function () {
     token = await Token.connect(token_acc).deploy();
     await token.deployed();
     const Bridge = await ethers.getContractFactory("ClearingHouse_1");
-    bridge = await Bridge.connect(bridge_acc).deploy(token_acc.getAddress());
+    bridge = await Bridge.connect(bridge_acc).deploy(token.address);
     await bridge.deployed();
+    await token.approve(
+      bridge.address,
+      ethers.BigNumber.from("0xD3C21BCECCEDA1000000")
+    );
+    await token
+      .connect(end_acc)
+      .approve(bridge.address, ethers.BigNumber.from("0xD3C21BCECCEDA1000000"));
   });
+
   it("Deploys the token and bridge contracts", async function () {
     assert.ok(token.address);
     assert.ok(bridge.address);
   });
+
   it("Withdraws minted tokens", async function () {
-    signed_test_abi = await end_acc.signMessage(test_abi);
+    const token_address = token.address;
+    const amount = "0xde0b6b3a7640000";
+    const nonce = "0x01";
+    const end_address = end_acc.address;
+    test_abi = ethers.utils.hexConcat(
+      [token_address, amount, nonce, end_address].map((s) =>
+        ethers.utils.hexZeroPad(s, 32)
+      )
+    );
+    hashed_test_abi = ethers.utils.keccak256(test_abi.toLowerCase());
+    signed_test_abi = await bridge_acc.signMessage(
+      ethers.utils.arrayify(hashed_test_abi)
+    );
     const split = ethers.utils.splitSignature(signed_test_abi);
-    // (split.v, split.r, split.s);
-    console.log(signed_test_abi);
-    assert.ok(true);
+    await bridge
+      .connect(end_acc)
+      .withdraw(
+        token_address,
+        ethers.BigNumber.from("0xde0b6b3a7640000"),
+        1,
+        split.v,
+        split.r,
+        split.s
+      );
+    expect(await token.balanceOf(end_acc.getAddress())).to.equal(
+      "0xde0b6b3a7640000"
+    );
   });
-  // it("Only allows the owner to call withdraw", async function () {
-  //   signed_test_abi = await end_acc.signMessage(test_abi);
-  //   singed_test_abi = slice
-  // });
-  // it("Requires the correct token address"),
-  //   async function () {
-  //     bridge.withdraw();
-  //   };
-  // it("Emits a TokensBurned event"),
-  //   async function () {
-  //     bridge.withdraw();
-  //   };
+
+  it("Only allows the owner to call withdraw", async function () {
+    const token_address = token.address;
+    const amount = "0xde0b6b3a7640000";
+    const nonce = "0x01";
+    const end_address = end_acc.address;
+    test_abi = ethers.utils.hexConcat(
+      [token_address, amount, nonce, end_address].map((s) =>
+        ethers.utils.hexZeroPad(s, 32)
+      )
+    );
+    hashed_test_abi = ethers.utils.keccak256(test_abi.toLowerCase());
+    signed_test_abi = await end_acc.signMessage(
+      ethers.utils.arrayify(hashed_test_abi)
+    );
+    const split = ethers.utils.splitSignature(signed_test_abi);
+    await expect(
+      bridge
+        .connect(end_acc)
+        .withdraw(
+          token_address,
+          ethers.BigNumber.from("0xde0b6b3a7640000"),
+          1,
+          split.v,
+          split.r,
+          split.s
+        )
+    ).to.be.revertedWith("Invalid Signature!");
+  });
+  it("Requires the correct token address", async function () {
+    const token_address = await end_acc.getAddress();
+    const amount = "0xde0b6b3a7640000";
+    const nonce = "0x01";
+    const end_address = end_acc.address;
+    test_abi = ethers.utils.hexConcat(
+      [token_address, amount, nonce, end_address].map((s) =>
+        ethers.utils.hexZeroPad(s, 32)
+      )
+    );
+    hashed_test_abi = ethers.utils.keccak256(test_abi.toLowerCase());
+    signed_test_abi = await bridge_acc.signMessage(
+      ethers.utils.arrayify(hashed_test_abi)
+    );
+    const split = ethers.utils.splitSignature(signed_test_abi);
+    await expect(
+      bridge
+        .connect(end_acc)
+        .withdraw(
+          token_address,
+          ethers.BigNumber.from("0xde0b6b3a7640000"),
+          1,
+          split.v,
+          split.r,
+          split.s
+        )
+    ).to.be.revertedWith("Invalid token address!");
+  });
+  it("Emits a TokensBurned event", async function () {
+    const token_address = token.address;
+    const amount = "0xde0b6b3a7640000";
+    const nonce = "0x01";
+    const end_address = end_acc.address;
+    test_abi = ethers.utils.hexConcat(
+      [token_address, amount, nonce, end_address].map((s) =>
+        ethers.utils.hexZeroPad(s, 32)
+      )
+    );
+    hashed_test_abi = ethers.utils.keccak256(test_abi.toLowerCase());
+    signed_test_abi = await bridge_acc.signMessage(
+      ethers.utils.arrayify(hashed_test_abi)
+    );
+    const split = ethers.utils.splitSignature(signed_test_abi);
+    await bridge
+      .connect(end_acc)
+      .withdraw(
+        token_address,
+        ethers.BigNumber.from("0xde0b6b3a7640000"),
+        1,
+        split.v,
+        split.r,
+        split.s
+      );
+    await expect(
+      bridge
+        .connect(end_acc)
+        .deposit(
+          1,
+          "afbc94fbd23c8f6305b5d857f26709d6986f182985650a3c1549f9b885d7b1ff"
+        )
+    )
+      .to.emit(bridge, "TokensBurned")
+      .withArgs(
+        1,
+        "afbc94fbd23c8f6305b5d857f26709d6986f182985650a3c1549f9b885d7b1ff"
+      );
+  });
 });

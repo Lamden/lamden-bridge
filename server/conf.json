@@ -22,7 +22,7 @@
   "eth": {
     "privKey": "2cc1c54f39e018e99f177e41dba2dc4981caf9f5dd804ebd6263c9217530b77d",
     "contract_address": "0x6CBe346be545E6F64f435B314e052ce753eE0b55",
-    "bridge_address": "0x4df1337870d29888Afa853fC0E15288559B7a562",
+    "bridge_address": "0xD7A975646aa8841197497C716e60449891dF8Ee6",
     "network": "wss://rinkeby.infura.io/ws/v3/a3f4e2530c1e4f558a7102056bb2bd87"
   }
 }
