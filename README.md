@@ -57,7 +57,7 @@ Run `npx hardhat test` inside `./eth`.
 
 ### Reproducing the end to end test for Tau tokens
 
-Note: Deployment of contracts may be skipped, and contracts interacted with at addresses already deployed and listed in the config files.
+Note: Deployment of contracts may be skipped, and contracts interacted with at addresses already deployed and listed in the config files. In this case skip to step 4.
 
 1. **Deploying to Ethereum**
 
