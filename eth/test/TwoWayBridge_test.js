@@ -160,4 +160,42 @@ describe("TwoWayBridge", function () {
         "afbc94fbd23c8f6305b5d857f26709d6986f182985650a3c1549f9b885d7b1ff"
       );
   });
+  it("Checks for used nonces", async function () {
+    const token_address = token.address;
+    const amount = "0xde0b6b3a7640000";
+    const nonce = "0x01";
+    const end_address = end_acc.address;
+    test_abi = ethers.utils.hexConcat(
+      [token_address, amount, nonce, end_address].map((s) =>
+        ethers.utils.hexZeroPad(s, 32)
+      )
+    );
+    hashed_test_abi = ethers.utils.keccak256(test_abi.toLowerCase());
+    signed_test_abi = await bridge_acc.signMessage(
+      ethers.utils.arrayify(hashed_test_abi)
+    );
+    const split = ethers.utils.splitSignature(signed_test_abi);
+    await bridge
+      .connect(end_acc)
+      .withdraw(
+        token_address,
+        ethers.BigNumber.from("0xde0b6b3a7640000"),
+        1,
+        split.v,
+        split.r,
+        split.s
+      );
+    await expect(
+      bridge
+        .connect(end_acc)
+        .withdraw(
+          token_address,
+          ethers.BigNumber.from("0xde0b6b3a7640000"),
+          1,
+          split.v,
+          split.r,
+          split.s
+        )
+    ).to.be.revertedWith("Nonce already used!");
+  });
 });

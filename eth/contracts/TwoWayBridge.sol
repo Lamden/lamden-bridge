@@ -206,7 +206,7 @@ contract ControlledToken is IERC20, Ownable {
 contract ClearingHouse_1 is Ownable {
     using SafeMath for uint256;
 
-    mapping(address => uint256) nonces;
+    mapping (address => mapping(uint => bool)) nonceUsed;
 
     ControlledToken controlledToken;
 
@@ -248,6 +248,8 @@ contract ClearingHouse_1 is Ownable {
             address recoveredAddress = ecrecover(hashed, v, r, s);
             require(recoveredAddress != address(0) && recoveredAddress == owner(), 'Invalid Signature!');
             require(token == address(controlledToken), 'Invalid token address!');
+            require(nonceUsed[msg.sender][nonce] == false, 'Nonce already used!');
+            nonceUsed[msg.sender][nonce] = true;
             controlledToken.mint(msg.sender, amount);
     }
 }
