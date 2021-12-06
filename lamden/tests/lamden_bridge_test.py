@@ -22,12 +22,12 @@ class TestContract(unittest.TestCase):
         self.contract = self.c.get_contract("con_lamden_bridge")
         self.currencyContract = self.c.get_contract("currency")
         self.currencyContract.approve(amount=100, to="con_lamden_bridge")
-        # print(
-        #     "ABI: ",
-        #     self.contract.deposit(
-        #         amount=1, ethereum_address="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
-        #     ),
-        # )
+        self.contract.set_token(
+            eth_contract="0x4489E6467B15Ca881F51b80875b6Ab2b0e2Dcd3c", decimals=18
+        )
+        self.contract.set_bridge(
+            eth_contract="0x9aCF50A42180f38937af01FF10cbF57aaE3FD4af"
+        )
 
     def tearDown(self):
         self.c.flush()
@@ -63,7 +63,7 @@ class TestContract(unittest.TestCase):
         with self.assertRaises(Exception) as cm:
             self.contract.withdraw(amount=1, to="someone", signer="mocker")
         err = cm.exception
-        self.assertEqual(str(err), "Only the owner can call!")
+        self.assertEqual(str(err), "Only the operator can call!")
 
     def test_only_owner_can_call_post_proof(self):
         with self.assertRaises(Exception) as cm:
@@ -71,7 +71,7 @@ class TestContract(unittest.TestCase):
                 hashed_abi="example", signed_abi="signed", signer="mocker"
             )
         err = cm.exception
-        self.assertEqual(str(err), "Only owner can call!")
+        self.assertEqual(str(err), "Only operator can call!")
 
 
 if __name__ == "__main__":

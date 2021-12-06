@@ -154,17 +154,19 @@ contract ClearingHouse_1 is Ownable {
         return keccak256(x);
     }
 
-    function encode(address token, uint256 amount, uint256 nonce, address sender) public pure returns (bytes memory) {
+    function encode(address token, uint256 amount, uint256 nonce, address sender, address bridge) public pure returns (bytes memory) {
                 return abi.encode(
                     token,
                     amount,
                     nonce,
-                    sender
+                    sender,
+                    bridge
                 );
     }
 
-    function withdraw(address token, uint256 amount, uint256 nonce, uint8 v, bytes32 r, bytes32 s) public {
-            bytes memory encoded = encode(token, amount, nonce, msg.sender);
+    function withdraw(address token, uint256 amount, uint256 nonce, uint8 v, bytes32 r, bytes32 s, address bridge) public {
+            require(bridge == address(this), 'Invalid bridge address!');
+            bytes memory encoded = encode(token, amount, nonce, msg.sender, address(this));
             bytes32 hashed = hash(encoded);
             hashed = hashEthMsg(hashed);
             address recoveredAddress = ecrecover(hashed, v, r, s);

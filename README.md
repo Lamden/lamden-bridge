@@ -47,6 +47,8 @@ Working repo for wrapped ERC20 -> Lamden token facilities
 
 ### Unit testing
 
+Inside `./eth` run `npm install @openzeppelin/contracts`
+
 **Lamden contract**
 
 Run `python3 lamden_bridge_test.py` inside the test's directory. The error logs above test results are expected, as the tests check for assertions throwing the correct errors.

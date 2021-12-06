@@ -42,8 +42,9 @@ describe("TwoWayBridge", function () {
     const amount = "0xde0b6b3a7640000";
     const nonce = "0x01";
     const end_address = end_acc.address;
+    const bridge_address = bridge.address;
     test_abi = ethers.utils.hexConcat(
-      [token_address, amount, nonce, end_address].map((s) =>
+      [token_address, amount, nonce, end_address, bridge_address].map((s) =>
         ethers.utils.hexZeroPad(s, 32)
       )
     );
@@ -60,7 +61,8 @@ describe("TwoWayBridge", function () {
         1,
         split.v,
         split.r,
-        split.s
+        split.s,
+        bridge_address
       );
     expect(await token.balanceOf(end_acc.getAddress())).to.equal(
       "0xde0b6b3a7640000"
@@ -72,8 +74,9 @@ describe("TwoWayBridge", function () {
     const amount = "0xde0b6b3a7640000";
     const nonce = "0x01";
     const end_address = end_acc.address;
+    const bridge_address = bridge.address;
     test_abi = ethers.utils.hexConcat(
-      [token_address, amount, nonce, end_address].map((s) =>
+      [token_address, amount, nonce, end_address, bridge_address].map((s) =>
         ethers.utils.hexZeroPad(s, 32)
       )
     );
@@ -91,7 +94,8 @@ describe("TwoWayBridge", function () {
           1,
           split.v,
           split.r,
-          split.s
+          split.s,
+          bridge_address
         )
     ).to.be.revertedWith("Invalid Signature!");
   });
@@ -100,8 +104,9 @@ describe("TwoWayBridge", function () {
     const amount = "0xde0b6b3a7640000";
     const nonce = "0x01";
     const end_address = end_acc.address;
+    const bridge_address = bridge.address;
     test_abi = ethers.utils.hexConcat(
-      [token_address, amount, nonce, end_address].map((s) =>
+      [token_address, amount, nonce, end_address, bridge_address].map((s) =>
         ethers.utils.hexZeroPad(s, 32)
       )
     );
@@ -119,7 +124,8 @@ describe("TwoWayBridge", function () {
           1,
           split.v,
           split.r,
-          split.s
+          split.s,
+          bridge_address
         )
     ).to.be.revertedWith("Invalid token address!");
   });
@@ -128,8 +134,9 @@ describe("TwoWayBridge", function () {
     const amount = "0xde0b6b3a7640000";
     const nonce = "0x01";
     const end_address = end_acc.address;
+    const bridge_address = bridge.address;
     test_abi = ethers.utils.hexConcat(
-      [token_address, amount, nonce, end_address].map((s) =>
+      [token_address, amount, nonce, end_address, bridge_address].map((s) =>
         ethers.utils.hexZeroPad(s, 32)
       )
     );
@@ -146,7 +153,8 @@ describe("TwoWayBridge", function () {
         1,
         split.v,
         split.r,
-        split.s
+        split.s,
+        bridge_address
       );
     await expect(
       bridge
@@ -167,8 +175,9 @@ describe("TwoWayBridge", function () {
     const amount = "0xde0b6b3a7640000";
     const nonce = "0x01";
     const end_address = end_acc.address;
+    const bridge_address = bridge.address;
     test_abi = ethers.utils.hexConcat(
-      [token_address, amount, nonce, end_address].map((s) =>
+      [token_address, amount, nonce, end_address, bridge_address].map((s) =>
         ethers.utils.hexZeroPad(s, 32)
       )
     );
@@ -185,7 +194,8 @@ describe("TwoWayBridge", function () {
         1,
         split.v,
         split.r,
-        split.s
+        split.s,
+        bridge_address
       );
     await expect(
       bridge
@@ -196,7 +206,8 @@ describe("TwoWayBridge", function () {
           1,
           split.v,
           split.r,
-          split.s
+          split.s,
+          bridge_address
         )
     ).to.be.revertedWith("Nonce already used!");
   });
@@ -214,5 +225,35 @@ describe("TwoWayBridge", function () {
     await expect(token.connect(mock_acc).unpause()).to.be.revertedWith(
       "Must have pauser role to unpause"
     );
+  });
+  it("Checks for correct bridge address", async function () {
+    const token_address = token.address;
+    const amount = "0xde0b6b3a7640000";
+    const nonce = "0x01";
+    const end_address = end_acc.address;
+    const bridge_address = end_acc.address;
+    test_abi = ethers.utils.hexConcat(
+      [token_address, amount, nonce, end_address, bridge_address].map((s) =>
+        ethers.utils.hexZeroPad(s, 32)
+      )
+    );
+    hashed_test_abi = ethers.utils.keccak256(test_abi.toLowerCase());
+    signed_test_abi = await bridge_acc.signMessage(
+      ethers.utils.arrayify(hashed_test_abi)
+    );
+    const split = ethers.utils.splitSignature(signed_test_abi);
+    await expect(
+      bridge
+        .connect(end_acc)
+        .withdraw(
+          token_address,
+          ethers.BigNumber.from("0xde0b6b3a7640000"),
+          1,
+          split.v,
+          split.r,
+          split.s,
+          bridge_address
+        )
+    ).to.be.revertedWith("Invalid bridge address!");
   });
 });

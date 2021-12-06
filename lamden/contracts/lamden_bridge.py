@@ -2,10 +2,11 @@ import currency
 
 nonces = Hash(default_value=0)
 proofs = Hash()
+metadata = Hash()
 
-owner = Variable()
 token_address = Variable()
 token_decimals = Variable()
+bridge_address = Variable()
 
 HEX_BYTES = 64
 
@@ -49,39 +50,60 @@ def pack_int(i):
 
 
 @construct
-def seed(contract_address="0x4489E6467B15Ca881F51b80875b6Ab2b0e2Dcd3c", decimals=18):
-    owner.set(ctx.caller)
-    token_address.set(contract_address)
+def seed():
+    metadata["operator"] = ctx.caller
+
+
+# LST002
+@export
+def change_metadata(key: str, value: Any):
+    assert ctx.caller == metadata["operator"], "Only operator can set metadata!"
+    metadata[key] = value
+
+
+@export
+def set_token(eth_contract: str, decimals: int):
+    assert ctx.caller == metadata["operator"], "Only the operator can call!"
+    token_address.set(eth_contract)
     token_decimals.set(decimals)
 
 
 @export
+def set_bridge(eth_contract: str):
+    assert ctx.caller == metadata["operator"], "Only the operator can call!"
+    bridge_address.set(eth_contract)
+
+
+@export
 def deposit(amount: float, ethereum_address: str):
+    assert token_address.get() is not None, "token_address variable not set"
+
     currency.transfer_from(amount=amount, to=ctx.this, main_account=ctx.caller)
 
     packed_token = pack_eth_address(token_address.get())
     packed_amount = pack_amount(amount, token_decimals.get())
     packed_nonce = pack_int(nonces[ethereum_address] + 1)
     packed_address = pack_eth_address(ethereum_address)
+    packed_bridge = pack_eth_address(bridge_address.get())
 
     nonces[ethereum_address] += 1
 
-    abi = packed_token + packed_amount + packed_nonce + packed_address
+    abi = packed_token + packed_amount + packed_nonce + packed_address + packed_bridge
 
     return abi
-
-    # _hash = hashlib.sha3(abi)
 
 
 @export
 def withdraw(amount: float, to: str):
-    assert ctx.caller == owner.get(), "Only the owner can call!"
+    assert ctx.caller == metadata["operator"], "Only the operator can call!"
+    assert token_address.get() is not None, "token_address variable not set"
     currency.transfer(amount=amount, to=to)
 
 
 @export
 def post_proof(hashed_abi: str, signed_abi: str):
-    assert ctx.caller == owner.get(), "Only owner can call!"
+    assert ctx.caller == metadata["operator"], "Only operator can call!"
+    assert token_address.get() is not None, "token_address variable not set"
     proofs[hashed_abi] = signed_abi
 
 
