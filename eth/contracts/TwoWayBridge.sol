@@ -62,7 +62,7 @@ library SafeMath {
 contract Ownable {
     address public _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address previousOwner, address newOwner);
 
     constructor () {
         _owner = msg.sender;
@@ -132,7 +132,7 @@ contract ClearingHouse_1 is Ownable {
 
     ControlledToken controlledToken;
 
-    event TokensBurned(uint256 indexed amount, string receiver);
+    event TokensBurned(uint256 amount, string receiver);
 
     constructor(address _controlledToken) {
         controlledToken = ControlledToken(_controlledToken);
