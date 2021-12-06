@@ -102,17 +102,17 @@ contract ControlledToken is Context, AccessControlEnumerable, ERC20Burnable, ERC
     }
 
     function mint(address to, uint256 amount) public virtual {
-        require(hasRole(MINTER_ROLE, _msgSender()), "ERC20PresetMinterPauser: must have minter role to mint");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Must have minter role to mint");
         _mint(to, amount);
     }
 
     function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "ERC20PresetMinterPauser: must have pauser role to pause");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "Must have pauser role to pause");
         _pause();
     }
 
     function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "ERC20PresetMinterPauser: must have pauser role to unpause");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "Must have pauser role to unpause");
         _unpause();
     }
 
