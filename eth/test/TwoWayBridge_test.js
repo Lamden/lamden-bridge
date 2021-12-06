@@ -200,4 +200,19 @@ describe("TwoWayBridge", function () {
         )
     ).to.be.revertedWith("Nonce already used!");
   });
+  it("Requires minter role to mint", async function () {
+    await expect(
+      token.connect(mock_acc).mint(mock_acc.address, 1)
+    ).to.be.revertedWith("Must have minter role to mint");
+  });
+  it("Requires pauser role to pause", async function () {
+    await expect(token.connect(mock_acc).pause()).to.be.revertedWith(
+      "Must have pauser role to pause"
+    );
+  });
+  it("Requires pauser role to unpause", async function () {
+    await expect(token.connect(mock_acc).unpause()).to.be.revertedWith(
+      "Must have pauser role to unpause"
+    );
+  });
 });
