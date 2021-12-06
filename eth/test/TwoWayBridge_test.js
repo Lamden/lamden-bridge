@@ -16,18 +16,29 @@ describe("TwoWayBridge", function () {
   beforeEach(async () => {
     [token_acc, bridge_acc, end_acc, mock_acc] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("ControlledToken");
-    token = await Token.connect(token_acc).deploy();
+    token = await Token.connect(token_acc).deploy("wrappedTau", "wTAU");
     await token.deployed();
     const Bridge = await ethers.getContractFactory("ClearingHouse_1");
     bridge = await Bridge.connect(bridge_acc).deploy(token.address);
     await bridge.deployed();
-    await token.approve(
-      bridge.address,
-      ethers.BigNumber.from("0xD3C21BCECCEDA1000000")
-    );
+    await token
+      .connect(bridge_acc)
+      .approve(bridge.address, ethers.BigNumber.from("0xD3C21BCECCEDA1000000"));
     await token
       .connect(end_acc)
       .approve(bridge.address, ethers.BigNumber.from("0xD3C21BCECCEDA1000000"));
+    await token
+      .connect(end_acc)
+      .increaseAllowance(
+        bridge.address,
+        ethers.BigNumber.from("0xD3C21BCECCEDA1000000")
+      );
+    await token
+      .connect(token_acc)
+      .grantRole(
+        ethers.utils.keccak256(ethers.utils.toUtf8Bytes("MINTER_ROLE")),
+        bridge.address
+      );
   });
 
   it("Deploys the token and bridge contracts", async function () {

@@ -2,6 +2,12 @@
 
 pragma solidity ^0.8.3;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+
 library SafeMath {
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
@@ -53,7 +59,6 @@ library SafeMath {
     }
 }
 
-
 contract Ownable {
     address public _owner;
 
@@ -85,123 +90,40 @@ contract Ownable {
     }
 }
 
-interface IERC20 {
-    function totalSupply() external view returns (uint256);
-    function balanceOf(address tokenOwner) external view returns (uint256 balance);
-    function allowance(address tokenOwner, address spender) external view returns (uint256 remaining);
-    function transfer(address to, uint256 tokens) external returns (bool success);
-    function approve(address spender, uint256 tokens) external returns (bool success);
-    function transferFrom(address from, address to, uint256 tokens) external returns (bool success);
-    function mint(address to, uint256 amount) external returns (bool success);
-    function burn(address from, uint256 amount) external returns (bool success);
-}
+contract ControlledToken is Context, AccessControlEnumerable, ERC20Burnable, ERC20Pausable {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
-contract ControlledToken is IERC20, Ownable {
-    using SafeMath for uint256;
-
-    mapping (address => uint256) private _balances;
-
-    mapping (address => mapping (address => uint256)) private _allowances;
-
-    uint256 private _totalSupply;
-
-    string private _name = "MockToken";
-    string private _symbol = "MOCK";
-    uint8 private _decimals = 18;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    function name() public view returns (string memory) {
-        return _name;
+        _setupRole(MINTER_ROLE, _msgSender());
+        _setupRole(PAUSER_ROLE, _msgSender());
     }
 
-    function symbol() public view returns (string memory) {
-        return _symbol;
+    function mint(address to, uint256 amount) public virtual {
+        require(hasRole(MINTER_ROLE, _msgSender()), "ERC20PresetMinterPauser: must have minter role to mint");
+        _mint(to, amount);
     }
 
-    function decimals() public view returns (uint8) {
-        return _decimals;
+    function pause() public virtual {
+        require(hasRole(PAUSER_ROLE, _msgSender()), "ERC20PresetMinterPauser: must have pauser role to pause");
+        _pause();
     }
 
-    function totalSupply() public view override returns (uint256) {
-        return _totalSupply;
+    function unpause() public virtual {
+        require(hasRole(PAUSER_ROLE, _msgSender()), "ERC20PresetMinterPauser: must have pauser role to unpause");
+        _unpause();
     }
 
-    function balanceOf(address account) public view override returns (uint256) {
-        return _balances[account];
-    }
-
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-        _transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    function allowance(address owner, address spender) public view virtual override returns (uint256) {
-        return _allowances[owner][spender];
-    }
-
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        _approve(msg.sender, spender, amount);
-        return true;
-    }
-
-    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
-        _transfer(sender, recipient, amount);
-
-        uint256 currentAllowance = _allowances[sender][msg.sender];
-        require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
-        _approve(sender, msg.sender, currentAllowance - amount);
-        return true;
-    }
-
-    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].add(addedValue));
-        return true;
-    }
-
-    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
-        return true;
-    }
-
-    function mint(address to, uint256 amount) public override virtual returns (bool success) {
-        _totalSupply = _totalSupply.add(amount);
-        _balances[to] = _balances[to].add(amount);
-        emit Transfer(address(0), to, amount);
-        return true;
-    }
-
-    function burn(address from, uint256 amount) public override virtual returns (bool success) {
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[from] = _balances[from].sub(amount);
-        emit Transfer(address(0), from, amount);
-        return true;
-    }
-
-    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
-
-        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(amount);
-        emit Transfer(sender, recipient, amount);
-    }
-
-    function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
-
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
-    }
-
-    function _setupDecimals(uint8 decimals_) internal {
-        _decimals = decimals_;
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override(ERC20, ERC20Pausable) {
+        super._beforeTokenTransfer(from, to, amount);
     }
 }
-
 
 contract ClearingHouse_1 is Ownable {
     using SafeMath for uint256;
@@ -218,7 +140,7 @@ contract ClearingHouse_1 is Ownable {
 
     function deposit(uint256 amount, string memory receiver) public {
         controlledToken.transferFrom(msg.sender, address(this), amount);
-        controlledToken.burn(address(this), amount);
+        controlledToken.burn(amount);
 
         emit TokensBurned(amount, receiver);
     }
