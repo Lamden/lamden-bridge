@@ -22,17 +22,8 @@ describe("TwoWayBridge", function () {
     bridge = await Bridge.connect(bridge_acc).deploy(token.address);
     await bridge.deployed();
     await token
-      .connect(bridge_acc)
-      .approve(bridge.address, ethers.BigNumber.from("0xD3C21BCECCEDA1000000"));
-    await token
       .connect(end_acc)
       .approve(bridge.address, ethers.BigNumber.from("0xD3C21BCECCEDA1000000"));
-    await token
-      .connect(end_acc)
-      .increaseAllowance(
-        bridge.address,
-        ethers.BigNumber.from("0xD3C21BCECCEDA1000000")
-      );
     await token
       .connect(token_acc)
       .grantRole(
