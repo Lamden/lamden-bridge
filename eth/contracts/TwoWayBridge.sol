@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.3;
+pragma solidity 0.8.3;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -62,7 +62,7 @@ library SafeMath {
 contract Ownable {
     address public _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address previousOwner, address newOwner);
 
     constructor () {
         _owner = msg.sender;
@@ -132,7 +132,7 @@ contract ClearingHouse_1 is Ownable {
 
     ControlledToken controlledToken;
 
-    event TokensBurned(uint256 indexed amount, string receiver);
+    event TokensBurned(uint256 amount, string receiver);
 
     constructor(address _controlledToken) {
         controlledToken = ControlledToken(_controlledToken);
@@ -172,7 +172,7 @@ contract ClearingHouse_1 is Ownable {
             address recoveredAddress = ecrecover(hashed, v, r, s);
             require(recoveredAddress != address(0) && recoveredAddress == owner(), 'Invalid Signature!');
             require(token == address(controlledToken), 'Invalid token address!');
-            require(nonceUsed[msg.sender][nonce] == false, 'Nonce already used!');
+            require(!nonceUsed[msg.sender][nonce], 'Nonce already used!');
             nonceUsed[msg.sender][nonce] = true;
             controlledToken.mint(msg.sender, amount);
     }
